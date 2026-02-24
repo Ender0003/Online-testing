@@ -1,38 +1,129 @@
-.App {
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+.app-wrapper {
+  min-height: 100vh;
+  transition: background-color 0.5s ease;
+  font-family: 'Segoe UI', Roboto, sans-serif;
+}
+
+.app-wrapper.student { background-color: #ebf4ff; }
+.app-wrapper.teacher { background-color: #f0fdf4; }
+
+.main-header {
+  color: white;
+  padding: 40px 20px;
+  text-align: center;
+  transition: background-color 0.5s ease;
+}
+
+.student .main-header { background-color: #2563eb; } 
+.teacher .main-header { background-color: #16a34a; } 
+
+.container {
+  max-width: 500px;
+  margin: -30px auto 40px;
+  padding: 0 20px;
+}
+
+.selection-card, .form-card {
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
   text-align: center;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.role-buttons {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.role-btn {
+  flex: 1;
+  padding: 15px;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  background: white;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 16px;
+  transition: 0.3s;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+
+.student .student-btn.active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+.teacher .teacher-btn.active {
+  background: #16a34a;
+  color: white;
+  border-color: #16a34a;
+}
+
+
+.inputs {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.inputs input {
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.submit-action {
+  width: 100%;
+  padding: 15px;
+  border: none;
+  border-radius: 8px;
   color: white;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
 }
 
-.App-link {
-  color: #61dafb;
+.student .submit-action { background: #2563eb; }
+.teacher .submit-action { background: #16a34a; }
+
+
+@keyframes fadeInSlide {
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.form-card {
+  animation: fadeInSlide 0.4s ease-out;
+}
+.footer {
+  margin-top: auto;
+  padding: 0.5rem;
+  background: white;
+  font-size: 0.9rem;
+  color: #64748b;
+  border-top: 1px solid #e2e8f0;
+  text-align: center;
+  transition: border-color 0.5s ease;
+}
+
+
+.student .footer {
+  border-top: 3px solid #2563eb;
+}
+
+.teacher .footer {
+  border-top: 3px solid #16a34a;
 }
