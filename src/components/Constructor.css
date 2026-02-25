@@ -1,0 +1,365 @@
+/* =========================================
+   Constructor.css - ПОВНА ТА ВИПРАВЛЕНА ВЕРСІЯ
+   ========================================= */
+
+* { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+}
+
+.builder-layout {
+  display: flex;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background-color: #f1f5f9;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+/* --- САЙДБАР (Sidebar) --- */
+.sidebar-nav {
+  width: 280px;
+  min-width: 280px;
+  background: #1e293b;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  padding: 25px 20px;
+  height: 100vh;
+  box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease;
+}
+
+/* ВИПРАВЛЕНО: Хрестик і текст тепер в один рядок */
+.sidebar-header {
+  display: flex;
+  justify-content: flex-start; 
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.close-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #334155; 
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.sidebar-title-block p {
+  color: #94a3b8;
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* СПИСОК ПИТАНЬ */
+.q-list {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 20px;
+}
+
+.q-nav-button {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: none;
+  padding: 12px;
+  border-radius: 12px;
+  color: white;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.q-nav-num {
+  background: #3b82f6;
+  min-width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+/* КНОПКИ ДІЙ */
+.sidebar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.add-btn {
+  background: #22c55e;
+  color: white;
+  border: none;
+  padding: 15px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #16a34a;
+}
+
+.exit-btn {
+  background: #f8fafc;
+  color: #1e293b;
+  border: none;
+  padding: 12px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* --- РОБОЧА ЗОНА --- */
+.editor-area {
+  flex: 1;
+  padding: 40px 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Синя шапка тесту */
+.test-settings-card {
+  background: #3b82f6;
+  padding: 20px 25px;
+  border-radius: 18px;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  width: 100%;
+  max-width: 850px;
+  box-shadow: 0 10px 25px rgba(59, 130, 246, 0.2);
+  margin-bottom: 30px;
+}
+
+.test-main-title {
+  flex: 1;
+  padding: 12px 18px;
+  border-radius: 10px;
+  border: none;
+  background: white;
+  outline: none;
+}
+
+.publish-btn {
+  background: #fbbf24;
+  color: #78350f;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #d97706;
+}
+
+/* Картка питання */
+.question-card {
+  background: white;
+  border-radius: 24px;
+  padding: 32px;
+  margin-bottom: 30px;
+  border-left: 12px solid #3b82f6; /* Товста синя смуга зліва */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease;
+}
+
+/* Верхня частина з назвою та селектом */
+.q-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.q-number {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.q-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Красивий селект */
+.q-type-select {
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+}
+
+/* Поле вводу питання */
+.q-textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 20px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  font-size: 1rem;
+  resize: none;
+  margin-bottom: 24px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.q-textarea:focus {
+  border-color: #3b82f6;
+  background: #fff;
+}
+
+/* Сітка відповідей */
+.ans-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.ans-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  transition: all 0.2s;
+}
+
+.ans-item:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.08);
+}
+
+.ans-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 0.95rem;
+  background: transparent;
+}
+
+/* Кнопка додавання варіанту */
+.add-ans-dashed-btn {
+  width: 100%;
+  padding: 14px;
+  background: transparent;
+  border: 2px dashed #cbd5e1;
+  border-radius: 14px;
+  color: #64748b;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-ans-dashed-btn:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  background: rgba(59, 130, 246, 0.02);
+}
+
+/* Кнопка видалити питання */
+.delete-q-btn {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+  border: none;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.delete-q-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* --- МОБІЛЬНА АДАПТИВНІСТЬ --- */
+@media (max-width: 850px) {
+  .sidebar-nav {
+    position: fixed;
+    left: 0; top: 0;
+    transform: translateX(-100%);
+    z-index: 10000;
+  }
+
+  .menu-open .sidebar-nav { transform: translateX(0); }
+  .ans-grid { grid-template-columns: 1fr; }
+  .add-ans-dashed { grid-column: span 1; }
+  .test-settings-card { flex-direction: column; }
+}
+
+.overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 9998;
+  backdrop-filter: blur(2px);
+}
+
+/* КНОПКА БУРГЕР */
+.burger-btn {
+  display: none; 
+  position: fixed;
+  top: 15px;
+  left: 15px;
+  z-index: 9997;
+  width: 45px;
+  height: 45px;
+  background: #1e293b;
+  border: none;
+  border-radius: 12px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.burger-btn span {
+  display: block;
+  width: 22px;
+  height: 3px;
+  background: white;
+  border-radius: 2px;
+  transition: 0.3s ease;
+}
+
+.menu-open .burger-btn span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+.menu-open .burger-btn span:nth-child(2) { opacity: 0; }
+.menu-open .burger-btn span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+
+@media (max-width: 850px) {
+  .burger-btn { display: flex; }
+  .menu-open .burger-btn { opacity: 0; pointer-events: none; }
+  .editor-area { padding-top: 80px; }
+}
+
+.floating-add-btn { background: #22c55e; color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 700; cursor: pointer; }

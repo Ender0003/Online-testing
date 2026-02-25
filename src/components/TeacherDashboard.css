@@ -1,0 +1,139 @@
+/* Основний контейнер */
+.dashboard-layout {
+  padding-top: 60px;
+  min-height: 100vh;
+  padding-bottom: 40px;
+  background-color: #f8fafc; /* Світлий фон для всього кабінету */
+}
+
+.dashboard-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Картка заголовка */
+.dashboard-header-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  padding: 25px;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+  margin-bottom: 30px;
+}
+
+.header-title {
+  margin: 0;
+  color: #1e293b;
+}
+
+.header-subtitle {
+  margin: 0;
+  color: #64748b;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+/* Кнопки у заголовку */
+.exit-btn-alt {
+  background: #f1f5f9;
+  color: #64748b;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.exit-btn-alt:hover {
+  background: #e2e8f0;
+}
+
+/* Порожній стан */
+.empty-state-card {
+  background: white;
+  padding: 80px 20px;
+  text-align: center;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+}
+
+.empty-icon {
+  font-size: 50px;
+  margin-bottom: 20px;
+}
+
+.empty-title {
+  color: #94a3b8;
+  margin-bottom: 20px;
+}
+
+.add-btn-large {
+  padding: 15px 30px;
+  background: #22c55e;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Сітка та картки тестів */
+.tests-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 25px;
+}
+
+.test-card {
+  background: white;
+  padding: 25px;
+  border-radius: 20px;
+  text-align: left;
+  border-top: 8px solid #22c55e;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.test-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+.test-card-title {
+  margin-bottom: 10px;
+  font-size: 1.4rem;
+  color: #1e293b;
+}
+
+.test-card-info {
+  color: #64748b;
+  margin-bottom: 20px;
+}
+
+.test-card-footer {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 15px;
+}
+
+.delete-test-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-weight: bold;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+.delete-test-btn:hover {
+  opacity: 1;
+}
