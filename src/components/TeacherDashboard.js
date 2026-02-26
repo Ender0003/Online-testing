@@ -6,11 +6,11 @@ const TeacherDashboard = ({ tests, onDelete, onCreateNew, onExit }) => {
     <div className="dashboard-layout">
       <div className="dashboard-container">
         
-        {/* Верхня панель з інформацією та кнопками */}
+        {/* Верхня панель */}
         <div className="dashboard-header-card">
           <div className="header-text">
-            <h2 className="header-title">Ваші тести</h2>
-            <p className="header-subtitle">Всього опубліковано: {tests.length}</p>
+            <h2 className="header-title">Панель викладача</h2>
+            <p className="header-subtitle">Управління тестами ({tests.length})</p>
           </div>
           <div className="header-actions">
             <button onClick={onCreateNew} className="publish-btn">
@@ -22,28 +22,41 @@ const TeacherDashboard = ({ tests, onDelete, onCreateNew, onExit }) => {
           </div>
         </div>
 
-        {/* Умова: якщо тестів немає, показуємо порожній стан */}
+        {/* Стан, коли тестів немає */}
         {tests.length === 0 ? (
           <div className="empty-state-card">
-            <div className="empty-icon">📁</div>
-            <h3 className="empty-title">У вас поки немає створених тестів</h3>
+            <div className="empty-icon">📂</div>
+            <h3 className="empty-title">Список тестів порожній</h3>
+            <p>Створіть свій перший тест, щоб студенти могли його пройти.</p>
             <button onClick={onCreateNew} className="add-btn-large">
-              Створити перший тест
+              + Створити перший тест
             </button>
           </div>
         ) : (
-          /* Сітка з картками тестів */
+          /* Сітка з тестами */
           <div className="tests-grid">
             {tests.map(test => (
               <div key={test.id} className="test-card">
-                <h3 className="test-card-title">{test.title}</h3>
-                <p className="test-card-info">Кількість запитань: {test.questions.length}</p>
+                <div className="test-card-content">
+                  <h3 className="test-card-title">
+                    {/* Виводимо назву або текст за замовчуванням */}
+                    {test.title || "Назва відсутня"}
+                  </h3>
+                  <p className="test-card-info">
+                    📊 Запитань: <strong>{test.questions?.length || 0}</strong>
+                  </p>
+                </div>
+                
                 <div className="test-card-footer">
                   <button 
-                    onClick={() => onDelete(test.id)} 
+                    onClick={() => {
+                      if(window.confirm('Ви впевнені, що хочете видалити цей тест?')) {
+                        onDelete(test.id);
+                      }
+                    }} 
                     className="delete-test-btn"
                   >
-                    🗑️ Видалити тест
+                    🗑️ Видалити
                   </button>
                 </div>
               </div>

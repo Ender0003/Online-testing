@@ -12,14 +12,20 @@ function App() {
   const [screen, setScreen] = useState(0); 
   const [isTeacher, setIsTeacher] = useState(false);
   const [activeTest, setActiveTest] = useState(null);
-  
-  // Завантаження тестів
+  const [isLoginMode, setIsLoginMode] = useState(true); 
+  const [error, setError] = useState('');
+  const [currentUser, setCurrentUser] = useState(null);
+
+  const [usersDb, setUsersDb] = useState(() => {
+    const saved = localStorage.getItem('registered_users');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const [publishedTests, setPublishedTests] = useState(() => {
     const saved = localStorage.getItem('published_tests');
     return saved ? JSON.parse(saved) : [];
   });
 
-  // ВІДНОВЛЕНО: Завантаження історії результатів
   const [testHistory, setTestHistory] = useState(() => {
     const saved = localStorage.getItem('test_history');
     return saved ? JSON.parse(saved) : [];
@@ -27,15 +33,49 @@ function App() {
 
   const [questions, setQuestions] = useState([]);
 
-  // Збереження всього в пам'ять браузера
   useEffect(() => {
     localStorage.setItem('published_tests', JSON.stringify(publishedTests));
     localStorage.setItem('test_history', JSON.stringify(testHistory));
-  }, [publishedTests, testHistory]);
+    localStorage.setItem('registered_users', JSON.stringify(usersDb));
+  }, [publishedTests, testHistory, usersDb]);
 
-  const handleRegister = (e) => {
+  const handleAuth = (e) => {
     e.preventDefault();
-    isTeacher ? setScreen(3) : setScreen(2);
+    setError('');
+    const formData = new FormData(e.target);
+    const email = formData.get('email').toLowerCase();
+    const password = formData.get('password');
+    const name = formData.get('name');
+    const selectedRole = isTeacher ? 'teacher' : 'student';
+
+    if (isLoginMode) {
+      const user = usersDb.find(u => u.email === email && u.password === password);
+      if (user) {
+        if (user.role !== selectedRole) {
+          setError(`Цей акаунт зареєстрований як ${user.role === 'student' ? 'студент' : 'викладач'}.`);
+          return;
+        }
+        setCurrentUser(user);
+        setScreen(user.role === 'teacher' ? 3 : 2);
+      } else {
+        setError('Невірний email або пароль');
+      }
+    } else {
+      if (usersDb.some(u => u.email === email)) {
+        const existing = usersDb.find(u => u.email === email);
+        setError(`Email вже зайнятий роллю: ${existing.role === 'student' ? 'студент' : 'викладач'}`);
+        return;
+      }
+      const newUser = { name, email, password, role: selectedRole };
+      setUsersDb([...usersDb, newUser]);
+      setCurrentUser(newUser);
+      setScreen(selectedRole === 'teacher' ? 3 : 2);
+    }
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setScreen(0);
   };
 
   return (
@@ -48,7 +88,7 @@ function App() {
               <img src="/logo192.png" alt="Логотип" className="hero-logo" />
               <h1>Е-Оцінка</h1>
             </div>
-            <p>Система онлайн-тестування</p>
+            <p>{isLoginMode ? 'Вхід у систему' : 'Створення акаунту'}</p>
           </header>
 
           <main className="auth-container">
@@ -59,7 +99,7 @@ function App() {
                 <button 
                   type="button"
                   className={`status-card ${!isTeacher ? 'active student' : ''}`} 
-                  onClick={() => setIsTeacher(false)}
+                  onClick={() => { setIsTeacher(false); setError(''); }}
                 >
                   <div className="status-icon">🎓</div>
                   <span>Я студент</span>
@@ -67,7 +107,7 @@ function App() {
                 <button 
                   type="button"
                   className={`status-card ${isTeacher ? 'active teacher' : ''}`} 
-                  onClick={() => setIsTeacher(true)}
+                  onClick={() => { setIsTeacher(true); setError(''); }}
                 >
                   <div className="status-icon">👨‍🏫</div>
                   <span>Я викладач</span>
@@ -76,18 +116,34 @@ function App() {
             </div>
 
             <div className="card registration-card">
-              <h3>Реєстрація {isTeacher ? 'викладача' : 'студента'}</h3>
-              <form onSubmit={handleRegister} className="auth-form">
-                <input name="name" placeholder="Повне ім'я" required />
+              {/* Тут ми піднімаємо заголовок вгору стилем */}
+              <h3 style={{ marginTop: '-15px', marginBottom: '20px', color: '#000' }}>
+                {isLoginMode ? 'Авторизація' : 'Реєстрація'} {isTeacher ? 'викладача' : 'студента'}
+              </h3>
+              
+              {error && <div className="error-msg" style={{color: 'red', marginBottom: '10px'}}>{error}</div>}
+              
+              <form onSubmit={handleAuth} className="auth-form">
+                {!isLoginMode && <input name="name" placeholder="Повне ім'я" required />}
                 <input name="email" type="email" placeholder="Електронна пошта" required />
                 <input name="password" type="password" placeholder="Пароль" required />
-                <button type="submit" className="main-submit-btn">Зареєструватися</button>
+                <button type="submit" className="main-submit-btn">
+                  {isLoginMode ? 'Увійти' : 'Зареєструватися'}
+                </button>
               </form>
+
+              <div 
+                className="auth-mode-switch" 
+                style={{marginTop: '15px', cursor: 'pointer', textAlign: 'center', fontSize: '0.9rem'}}
+                onClick={() => { setIsLoginMode(!isLoginMode); setError(''); }}
+              >
+                {isLoginMode ? 'Ще не зареєстровані? Створити акаунт' : 'Вже маєте акаунт? Увійти'}
+              </div>
             </div>
           </main>
 
           <footer className="main-footer">
-            <p>© {new Date().getFullYear()} Е-Оцінка. Всі права захищені.</p>
+            <p>© {new Date().getFullYear()} Е-Оцінка. Всі права застережено.</p>
           </footer>
         </div>
       )}
@@ -97,8 +153,13 @@ function App() {
           questions={questions} 
           setQuestions={setQuestions} 
           onExit={() => setScreen(3)} 
-          onPublish={(t) => { 
-            setPublishedTests([...publishedTests, {id: Date.now(), title: t, questions}]); 
+          onPublish={(newTitle) => { // Змінено на newTitle, щоб уникнути конфлікту
+            setPublishedTests([...publishedTests, { 
+              id: Date.now(), 
+              title: newTitle, // Використовуємо аргумент з конструктора
+              questions: questions,
+              author: currentUser?.name 
+            }]); 
             setScreen(3); 
           }} 
         />
@@ -106,19 +167,21 @@ function App() {
 
       {screen === 2 && (
         <StudentDashboard 
+          user={currentUser}
           tests={publishedTests} 
-          history={testHistory} // Передаємо історію
+          history={testHistory.filter(h => h.userEmail === currentUser?.email)} 
           onStartTest={(t) => { setActiveTest(t); setScreen(4); }} 
-          onExit={() => setScreen(0)} 
+          onExit={handleLogout} 
         />
       )}
 
       {screen === 3 && (
         <TeacherDashboard 
+          user={currentUser}
           tests={publishedTests} 
           onDelete={(id) => setPublishedTests(publishedTests.filter(t => t.id !== id))} 
           onCreateNew={() => { setQuestions([]); setScreen(1); }} 
-          onExit={() => setScreen(0)} 
+          onExit={handleLogout} 
         />
       )}
 
@@ -126,11 +189,12 @@ function App() {
         <TestRunner 
           test={activeTest} 
           onFinish={(result) => {
-            // Зберігаємо новий результат з датою
             if (result) {
               const newEntry = {
                 ...result,
                 id: Date.now(),
+                userEmail: currentUser?.email,
+                userName: currentUser?.name,
                 date: new Date().toLocaleString()
               };
               setTestHistory([newEntry, ...testHistory]);

@@ -137,3 +137,24 @@
 .delete-test-btn:hover {
   opacity: 1;
 }
+.test-card-title {
+  color: #1a1a1a; /* Чорний колір для назви */
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.test-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Кнопка видалення завжди буде знизу */
+  min-height: 160px;
+  border: 1px solid #e5e7eb;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.test-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}

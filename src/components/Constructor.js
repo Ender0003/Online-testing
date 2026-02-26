@@ -53,9 +53,22 @@ const Constructor = ({ questions, setQuestions, onExit, onPublish }) => {
             value={testTitle}
             onChange={(e) => setTestTitle(e.target.value)}
           />
-          <button className="publish-btn" onClick={() => onPublish(testTitle)}>
-            Опублікувати
-          </button>
+          <button 
+  className="publish-btn" 
+  onClick={() => {
+    if (!testTitle.trim()) {
+      alert("Будь ласка, введіть назву тесту перед публікацією!");
+      return;
+    }
+    if (questions.length === 0) {
+      alert("Додайте хоча б одне питання!");
+      return;
+    }
+    onPublish(testTitle);
+  }}
+>
+  Опублікувати
+</button>
         </div>
 
         {questions.map((q, index) => (

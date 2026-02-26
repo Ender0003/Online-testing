@@ -4,6 +4,7 @@
   padding: 60px 20px 120px;
   text-align: center;
   color: white;
+  overflow: hidden;
 }
 .student-theme .hero-header { background: #2563eb; }
 .teacher-theme .hero-header { background: #16a34a; }
@@ -137,4 +138,8 @@
 
 .copyright {
   opacity: 0.6;
+}
+.registration-card h3 {
+  margin-bottom: 25px; 
+  margin-top: 1px;
 }

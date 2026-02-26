@@ -25,7 +25,7 @@ const StudentDashboard = ({ tests, history, onStartTest, onExit }) => {
               <span className="icon">📊</span>
               <span className="btn-text">Результати</span>
             </button>
-            <button className="exit-btn compact" onClick={onExit}>🚪</button>
+            <button className="exit-btn compact" onClick={onExit}>Вихід</button>
           </nav>
         </div>
       </header>
