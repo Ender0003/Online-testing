@@ -27,7 +27,6 @@ const TeacherDashboard = ({ tests, onDelete, onCreateNew, onExit }) => {
           <div className="empty-state-card">
             <div className="empty-icon">📂</div>
             <h3 className="empty-title">Список тестів порожній</h3>
-            <p>Створіть свій перший тест, щоб студенти могли його пройти.</p>
             <button onClick={onCreateNew} className="add-btn-large">
               + Створити перший тест
             </button>
