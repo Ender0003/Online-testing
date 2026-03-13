@@ -13,8 +13,6 @@ const supabaseUrl = 'https://lcvclvnmnmxchiyhmezu.supabase.co/'
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxjdmNsdm5tbm14Y2hpeWhtZXp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzOTA4NTAsImV4cCI6MjA4ODk2Njg1MH0.X7vpxmC4VpwNTJ9Miu34pE8W5o4uB2aiJbyRfgnqYJ0'
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-console.log("Supabase підключено!", supabase)
-
 function App() {
   const [screen, setScreen] = useState(0); 
   const [isTeacher, setIsTeacher] = useState(false);
@@ -23,11 +21,7 @@ function App() {
   const [error, setError] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
 
-  const [usersDb, setUsersDb] = useState(() => {
-    const saved = localStorage.getItem('registered_users');
-    return saved ? JSON.parse(saved) : [];
-  });
-
+  // Ці стани поки залишаємо для тестів, але пізніше теж перенесемо в БД
   const [publishedTests, setPublishedTests] = useState(() => {
     const saved = localStorage.getItem('published_tests');
     return saved ? JSON.parse(saved) : [];
@@ -43,10 +37,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem('published_tests', JSON.stringify(publishedTests));
     localStorage.setItem('test_history', JSON.stringify(testHistory));
-    localStorage.setItem('registered_users', JSON.stringify(usersDb));
-  }, [publishedTests, testHistory, usersDb]);
+  }, [publishedTests, testHistory]);
 
-  const handleAuth = (e) => {
+  // Основна функція авторизації стала асинхронною
+  const handleAuth = async (e) => {
     e.preventDefault();
     setError('');
     const formData = new FormData(e.target);
@@ -56,31 +50,62 @@ function App() {
     const selectedRole = isTeacher ? 'teacher' : 'student';
 
     if (isLoginMode) {
-      const user = usersDb.find(u => u.email === email && u.password === password);
-      if (user) {
-        if (user.role !== selectedRole) {
-          setError(`Цей акаунт зареєстрований як ${user.role === 'student' ? 'студент' : 'викладач'}.`);
-          return;
-        }
-        setCurrentUser(user);
-        setScreen(user.role === 'teacher' ? 3 : 2);
-      } else {
+      // 🔑 Вхід у систему
+      const { data, error: loginError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (loginError) {
         setError('Невірний email або пароль');
-      }
-    } else {
-      if (usersDb.some(u => u.email === email)) {
-        const existing = usersDb.find(u => u.email === email);
-        setError(`Email вже зайнятий роллю: ${existing.role === 'student' ? 'студент' : 'викладач'}`);
         return;
       }
-      const newUser = { name, email, password, role: selectedRole };
-      setUsersDb([...usersDb, newUser]);
-      setCurrentUser(newUser);
-      setScreen(selectedRole === 'teacher' ? 3 : 2);
+
+      const userRole = data.user.user_metadata.role;
+      if (userRole !== selectedRole) {
+        setError(`Цей акаунт зареєстрований як ${userRole === 'student' ? 'студент' : 'викладач'}.`);
+        return;
+      }
+
+      setCurrentUser({
+        name: data.user.user_metadata.full_name,
+        email: data.user.email,
+        role: userRole
+      });
+      setScreen(userRole === 'teacher' ? 3 : 2);
+
+    } else {
+      // 📝 Реєстрація нового користувача
+      const { data, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: name,
+            role: selectedRole,
+          }
+        }
+      });
+
+      if (authError) {
+        setError(authError.message);
+        return;
+      }
+
+      if (data.user) {
+        const newUser = { 
+          name: data.user.user_metadata.full_name, 
+          email: data.user.email, 
+          role: data.user.user_metadata.role 
+        };
+        setCurrentUser(newUser);
+        setScreen(selectedRole === 'teacher' ? 3 : 2);
+      }
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     setCurrentUser(null);
     setScreen(0);
   };
@@ -123,7 +148,6 @@ function App() {
             </div>
 
             <div className="card registration-card">
-              {/* Тут ми піднімаємо заголовок вгору стилем */}
               <h3 style={{ marginTop: '-15px', marginBottom: '20px', color: '#000' }}>
                 {isLoginMode ? 'Авторизація' : 'Реєстрація'} {isTeacher ? 'викладача' : 'студента'}
               </h3>
@@ -141,7 +165,6 @@ function App() {
 
               <div 
                 className="auth-mode-switch" 
-                style={{marginTop: '15px', cursor: 'pointer', textAlign: 'center', fontSize: '0.9rem'}}
                 onClick={() => { setIsLoginMode(!isLoginMode); setError(''); }}
               >
                 {isLoginMode ? 'Ще не зареєстровані? Створити акаунт' : 'Вже маєте акаунт? Увійти'}
@@ -155,15 +178,16 @@ function App() {
         </div>
       )}
 
+      {/* Решта екранів (Constructor, Dashboards, TestRunner) залишаються без змін */}
       {screen === 1 && (
         <Constructor 
           questions={questions} 
           setQuestions={setQuestions} 
           onExit={() => setScreen(3)} 
-          onPublish={(newTitle) => { // Змінено на newTitle, щоб уникнути конфлікту
+          onPublish={(newTitle) => {
             setPublishedTests([...publishedTests, { 
               id: Date.now(), 
-              title: newTitle, // Використовуємо аргумент з конструктора
+              title: newTitle, 
               questions: questions,
               author: currentUser?.name 
             }]); 
