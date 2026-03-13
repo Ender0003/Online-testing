@@ -7,6 +7,13 @@ import './components/Auth.css';
 import './components/StudentDashboard.css'; 
 import './components/TeacherDashboard.css'; 
 import './components/TestRunner.css';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js'
+
+const supabaseUrl = 'https://lcvclvnmnmxchiyhmezu.supabase.co/'
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxjdmNsdm5tbm14Y2hpeWhtZXp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMzOTA4NTAsImV4cCI6MjA4ODk2Njg1MH0.X7vpxmC4VpwNTJ9Miu34pE8W5o4uB2aiJbyRfgnqYJ0'
+const supabase = createClient(supabaseUrl, supabaseKey)
+
+console.log("Supabase підключено!", supabase)
 
 function App() {
   const [screen, setScreen] = useState(0); 
