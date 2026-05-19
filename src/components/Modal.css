@@ -1,0 +1,118 @@
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  z-index: 99999;
+  animation: backdropIn 0.15s ease;
+}
+
+@keyframes backdropIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-box {
+  background: #14141d;
+  border: 1px solid rgba(0, 242, 255, 0.2);
+  padding: 36px 32px 28px;
+  max-width: 420px;
+  width: min(100%, 420px);
+  position: relative;
+  clip-path: polygon(0 0, 100% 0, 100% 88%, 94% 100%, 0 100%);
+  animation: boxIn 0.2s ease;
+  box-shadow: 0 0 26px rgba(0, 0, 0, 0.32);
+}
+
+@keyframes boxIn {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-top-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #00f2ff, transparent);
+}
+
+.modal-message {
+  color: var(#0ea5e9);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.7;
+  margin: 0 0 28px;
+  font-family: 'Segoe UI', Roboto, sans-serif;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.modal-btn {
+  min-width: 110px;
+  padding: 11px 24px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'Segoe UI', Roboto, sans-serif;
+}
+
+.modal-btn-ok {
+  background: transparent;
+  border: 1px solid #00f2ff;
+  color: #00f2ff;
+}
+
+.modal-btn-ok:hover {
+  background: #00f2ff;
+  color: #000;
+  box-shadow: 0 0 15px rgba(0, 242, 255, 0.35);
+}
+
+.modal-btn-cancel {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #94a3b8;
+}
+
+.modal-btn-cancel:hover {
+  border-color: rgba(255, 255, 255, 0.26);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+@media (max-width: 520px) {
+  .modal-box {
+    padding: 30px 20px 20px;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .modal-btn {
+    width: 100%;
+  }
+}
