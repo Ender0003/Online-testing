@@ -87,8 +87,10 @@ function App() {
     deleteTest,
     saveResult,
     registeredTeachers,
+    testsLoading,
+    testsError,
     getHistoryForUser,
-  } = useTestData();
+  } = useTestData(currentUser);
 
   const teacherTests = publishedTests.filter((test) => isTeacherTest(test, currentUser));
   const studentTests = publishedTests.filter(hasTestOwner);
@@ -147,17 +149,22 @@ function App() {
     setScreen(SCREENS.STUDENT_DASHBOARD);
   };
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
+    let savedTest = null;
+
     if (editingTest) {
-      updateTest(editingTest.id, { title: draftTitle, questions: draftQuestions });
+      savedTest = await updateTest(editingTest.id, { title: draftTitle, questions: draftQuestions });
     } else {
-      publishTest({
+      savedTest = await publishTest({
         title: draftTitle,
         questions: draftQuestions,
         authorName: currentUser?.name,
         authorEmail: currentUser?.email,
       });
     }
+
+    if (!savedTest) return;
+
     setDraftTitle('');
     setDraftQuestions([]);
     setEditingTest(null);
@@ -240,6 +247,8 @@ function App() {
           user={currentUser}
           tests={studentTests}
           teachers={registeredTeachers}
+          testsLoading={testsLoading}
+          testsError={testsError}
           history={getHistoryForUser(currentUser?.email)}
           onStartTest={handleStartTest}
           onExit={handleLogout}
@@ -252,6 +261,8 @@ function App() {
         <TeacherDashboard
           user={currentUser}
           tests={teacherTests}
+          testsLoading={testsLoading}
+          testsError={testsError}
           onDelete={deleteTest}
           onEdit={goToEdit}
           onCreateNew={goToConstructor}

@@ -5,6 +5,8 @@ import Modal from './Modal';
 
 const TeacherDashboard = ({
   tests,
+  testsLoading = false,
+  testsError = '',
   onDelete,
   onEdit,
   onCreateNew,
@@ -156,7 +158,19 @@ const TeacherDashboard = ({
 
         <section className="dashboard-section">
           <h3 className="section-title">📂 Ваші опубліковані тести</h3>
-          {tests.length === 0 ? (
+          {testsError ? (
+            <div className="empty-tests-state">
+              <span className="empty-icon">⚠️</span>
+              <h4>Не вдалося завантажити тести</h4>
+              <p>{testsError}</p>
+            </div>
+          ) : testsLoading ? (
+            <div className="empty-tests-state">
+              <span className="empty-icon">⏳</span>
+              <h4>Завантаження тестів...</h4>
+              <p>Синхронізуємо дані з базою.</p>
+            </div>
+          ) : tests.length === 0 ? (
             <div className="empty-tests-state">
               <span className="empty-icon">📃</span>
               <h4>У вас ще немає створених тестів</h4>

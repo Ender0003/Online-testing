@@ -22,6 +22,8 @@ const isTeacherTest = (test, teacher) => {
 const StudentDashboard = ({
   tests = [],
   teachers = [],
+  testsLoading = false,
+  testsError = '',
   history = [],
   onStartTest,
   onExit,
@@ -101,7 +103,11 @@ const StudentDashboard = ({
           {activeTab === 'tests' ? (
             <div className="fade-in">
               <h2 className="section-title">Оберіть викладача</h2>
-              {sortedTeachers.length > 0 ? (
+              {testsError ? (
+                <div className="empty-state">{testsError}</div>
+              ) : testsLoading ? (
+                <div className="empty-state">Завантаження тестів...</div>
+              ) : sortedTeachers.length > 0 ? (
                 <div className="teachers-grid">
                   {sortedTeachers.map((teacher) => {
                     const teacherKey = getTeacherKey(teacher);
