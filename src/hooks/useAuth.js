@@ -1,12 +1,5 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '../supabaseClient';
-
-const mapProfileToUser = (profile) => ({
-  id: profile.id,
-  name: profile.name ?? profile.full_name ?? '',
-  email: profile.email,
-  role: profile.role,
-});
+﻿import { useEffect, useState } from 'react';
+import { apiClient } from '../apiClient';
 
 const sanitizeSavedUser = (user) => {
   if (!user || typeof user !== 'object') return null;
@@ -38,78 +31,21 @@ export function useAuth() {
   }, [currentUser]);
 
   const authenticate = async (credentials, isLoginMode) => {
-    const { email, password, name, role } = credentials;
-    const normalizedEmail = email.toLowerCase().trim();
-
-    if (isLoginMode) {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('email', normalizedEmail)
-        .maybeSingle();
-
-      if (error) {
-        return { success: false, error: 'Не вдалося підключитися до бази профілів.' };
-      }
-
-      if (!data || data.password !== password) {
-        return { success: false, error: 'Невірний email або пароль' };
-      }
-
-      if (data.role !== role) {
-        const roleLabel = data.role === 'student' ? 'студент' : 'викладач';
-        return {
-          success: false,
-          error: `Цей акаунт зареєстрований як ${roleLabel}.`,
-        };
-      }
-
-      const user = mapProfileToUser(data);
+    try {
+      const endpoint = isLoginMode ? '/api/auth/login' : '/api/auth/register';
+      const { user, token } = await apiClient.post(endpoint, credentials);
+      localStorage.setItem('auth_token', token);
       setCurrentUser(user);
       return { success: true, user };
+    } catch (error) {
+      return { success: false, error: error.message };
     }
-
-    const { data: existingUser, error: existingError } = await supabase
-      .from('profiles')
-      .select('email, role')
-      .eq('email', normalizedEmail)
-      .maybeSingle();
-
-    if (existingError) {
-      return { success: false, error: 'Не вдалося перевірити email у базі.' };
-    }
-
-    if (existingUser) {
-      const roleLabel = existingUser.role === 'student' ? 'студент' : 'викладач';
-      return {
-        success: false,
-        error: `Email вже зайнятий роллю: ${roleLabel}`,
-      };
-    }
-
-    const profilePayload = {
-      name: name?.trim() || '',
-      email: normalizedEmail,
-      password,
-      role,
-    };
-
-    const { data: createdProfile, error: createError } = await supabase
-      .from('profiles')
-      .insert([profilePayload])
-      .select()
-      .single();
-
-    if (createError) {
-      return { success: false, error: 'Не вдалося зберегти профіль у базі.' };
-    }
-
-    const user = mapProfileToUser(createdProfile);
-    setCurrentUser(user);
-    return { success: true, user };
   };
 
-  const logout = () => setCurrentUser(null);
+  const logout = () => {
+    localStorage.removeItem('auth_token');
+    setCurrentUser(null);
+  };
 
   return { currentUser, authenticate, logout };
 }

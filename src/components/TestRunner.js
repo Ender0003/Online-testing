@@ -1,23 +1,23 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import './TestRunner.css';
 
-const TestRunner = ({ test, onFinish, themeMode = 'dark', onToggleTheme }) => {
+const TestRunner = ({ test, onSubmit, onFinish, themeMode = 'dark', onToggleTheme }) => {
   const [answers, setAnswers] = useState({});
-  const [finished, setFinished] = useState(false);
+  const [result, setResult] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const handleSingleSelect = (qId, ansId) => {
     setAnswers({ ...answers, [qId]: ansId });
   };
 
   const handleMultipleSelect = (qId, ansId, checked) => {
-    const current = answers[qId] instanceof Set ? answers[qId] : new Set();
-    const updated = new Set(current);
-    if (checked) {
-      updated.add(ansId);
-    } else {
-      updated.delete(ansId);
-    }
-    if (updated.size === 0) {
+    const current = Array.isArray(answers[qId]) ? answers[qId] : [];
+    const updated = checked
+      ? [...current, ansId]
+      : current.filter((id) => id !== ansId);
+
+    if (updated.length === 0) {
       const { [qId]: _, ...rest } = answers;
       setAnswers(rest);
     } else {
@@ -25,33 +25,29 @@ const TestRunner = ({ test, onFinish, themeMode = 'dark', onToggleTheme }) => {
     }
   };
 
-  const calculateResults = () => {
-    let correct = 0;
-    test.questions.forEach((q) => {
-      if (q.type === 'multiple') {
-        const correctIds = new Set(
-          q.answers.filter((a) => a.isCorrect).map((a) => a.id)
-        );
-        const selectedIds = answers[q.id] instanceof Set ? answers[q.id] : new Set();
-        const isCorrect =
-          correctIds.size === selectedIds.size &&
-          [...correctIds].every((id) => selectedIds.has(id));
-        if (isCorrect) correct++;
-      } else {
-        const correctAns = q.answers.find((a) => a.isCorrect);
-        if (answers[q.id] === correctAns?.id) correct++;
-      }
-    });
-    return { score: correct, total: test.questions.length };
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    setSubmitError('');
+
+    try {
+      const serverResult = await onSubmit({
+        testId: test.id,
+        answers,
+      });
+      setResult(serverResult);
+    } catch (error) {
+      setSubmitError(error.message || 'Не вдалося завершити тест.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const answeredCount = Object.keys(answers).length;
   const progressPercent = (answeredCount / test.questions.length) * 100;
   const isEveryQuestionAnswered = answeredCount === test.questions.length;
 
-  if (finished) {
-    const res = calculateResults();
-    const percentage = res.total > 0 ? Math.round((res.score / res.total) * 100) : 0;
+  if (result) {
+    const percentage = result.total > 0 ? Math.round((result.score / result.total) * 100) : 0;
 
     return (
       <div className="runner-layout result-screen">
@@ -62,13 +58,13 @@ const TestRunner = ({ test, onFinish, themeMode = 'dark', onToggleTheme }) => {
           <div className="result-icon">🏆</div>
           <h2 className="result-title">Тест завершено!</h2>
           <div className="score-display">
-            <span className="score-num">{res.score}</span>
-            <span className="score-total">/ {res.total}</span>
+            <span className="score-num">{result.score}</span>
+            <span className="score-total">/ {result.total}</span>
           </div>
           <div className="percentage-badge">{percentage}% успішно</div>
           <button
             className="back-to-list-btn"
-            onClick={() => onFinish({ testTitle: test.title, score: res.score, total: res.total })}
+            onClick={onFinish}
           >
             До списку тестів
           </button>
@@ -109,7 +105,7 @@ const TestRunner = ({ test, onFinish, themeMode = 'dark', onToggleTheme }) => {
               <div className="answers-run-grid">
                 {q.answers.map((a) => {
                   const isSelected = isMultiple
-                    ? answers[q.id] instanceof Set && answers[q.id].has(a.id)
+                    ? Array.isArray(answers[q.id]) && answers[q.id].includes(a.id)
                     : answers[q.id] === a.id;
 
                   return (
@@ -144,13 +140,15 @@ const TestRunner = ({ test, onFinish, themeMode = 'dark', onToggleTheme }) => {
           );
         })}
 
+        {submitError && <div className="empty-data">{submitError}</div>}
+
         <button
           className="finish-test-btn"
-          disabled={!isEveryQuestionAnswered}
+          disabled={!isEveryQuestionAnswered || submitting}
           title={!isEveryQuestionAnswered ? 'Дайте відповідь на всі питання' : 'Завершити тест'}
-          onClick={() => setFinished(true)}
+          onClick={handleSubmit}
         >
-          Завершити тест
+          {submitting ? 'Перевірка...' : 'Завершити тест'}
         </button>
       </div>
     </div>

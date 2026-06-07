@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { SCREENS } from './constants/Screens';
 import { useAuth } from './hooks/useAuth';
 import { useTestData } from './hooks/useTestData.js';
@@ -85,10 +85,14 @@ function App() {
     publishTest,
     updateTest,
     deleteTest,
-    saveResult,
+    startTest,
+    fetchTeacherTest,
+    submitTest,
     registeredTeachers,
+    allResults,
     testsLoading,
     testsError,
+    getQuestionCount,
     getHistoryForUser,
   } = useTestData(currentUser);
 
@@ -102,11 +106,16 @@ function App() {
     setScreen(SCREENS.CONSTRUCTOR);
   };
 
-  const goToEdit = (test) => {
-    setEditingTest(test);
-    setDraftTitle(test.title || '');
-    setDraftQuestions(test.questions);
-    setScreen(SCREENS.CONSTRUCTOR);
+  const goToEdit = async (test) => {
+    try {
+      const fullTest = await fetchTeacherTest(test.id);
+      setEditingTest(fullTest);
+      setDraftTitle(fullTest.title || '');
+      setDraftQuestions(fullTest.questions || []);
+      setScreen(SCREENS.CONSTRUCTOR);
+    } catch (error) {
+      console.error('Не вдалося відкрити тест для редагування:', error.message);
+    }
   };
 
   const goToDashboard = () => {
@@ -133,19 +142,27 @@ function App() {
     setScreen(SCREENS.AUTH);
   };
 
-  const handleStartTest = (test) => {
-    setActiveTest(test);
-    setScreen(SCREENS.TEST_RUNNER);
+  const handleStartTest = async (test) => {
+    try {
+      const runnableTest = await startTest(test.id);
+      setActiveTest(runnableTest);
+      setScreen(SCREENS.TEST_RUNNER);
+    } catch (error) {
+      console.error('Не вдалося запустити тест:', error.message);
+    }
   };
 
-  const handleTestFinish = (result) => {
-    if (result) {
-      saveResult({
-        ...result,
+  const handleTestSubmit = async ({ testId, answers }) => {
+    return submitTest({
+      testId,
+      answers,
         userEmail: currentUser?.email,
         userName: currentUser?.name,
-      });
-    }
+    });
+  };
+
+  const handleTestFinish = () => {
+    setActiveTest(null);
     setScreen(SCREENS.STUDENT_DASHBOARD);
   };
 
@@ -247,6 +264,7 @@ function App() {
           user={currentUser}
           tests={studentTests}
           teachers={registeredTeachers}
+          getQuestionCount={getQuestionCount}
           testsLoading={testsLoading}
           testsError={testsError}
           history={getHistoryForUser(currentUser?.email)}
@@ -261,8 +279,10 @@ function App() {
         <TeacherDashboard
           user={currentUser}
           tests={teacherTests}
+          getQuestionCount={getQuestionCount}
           testsLoading={testsLoading}
           testsError={testsError}
+          analytics={allResults}
           onDelete={deleteTest}
           onEdit={goToEdit}
           onCreateNew={goToConstructor}
@@ -275,6 +295,7 @@ function App() {
       {screen === SCREENS.TEST_RUNNER && activeTest && (
         <TestRunner
           test={activeTest}
+          onSubmit={handleTestSubmit}
           onFinish={handleTestFinish}
           themeMode={themeMode}
           onToggleTheme={toggleTheme}

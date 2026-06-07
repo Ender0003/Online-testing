@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import './Auth.css';
 
 const AuthPage = ({ onSuccess, authenticate, themeMode = 'dark', onToggleTheme }) => {

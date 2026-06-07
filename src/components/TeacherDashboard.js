@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
+﻿import React, { useState } from 'react';
 import './TeacherDashboard.css';
 import Modal from './Modal';
 
@@ -7,6 +6,8 @@ const TeacherDashboard = ({
   tests,
   testsLoading = false,
   testsError = '',
+  analytics = [],
+  getQuestionCount = (test) => test.questions?.length || test.questionCount || 0,
   onDelete,
   onEdit,
   onCreateNew,
@@ -14,9 +15,6 @@ const TeacherDashboard = ({
   themeMode = 'dark',
   onToggleTheme,
 }) => {
-  const [analytics, setAnalytics] = useState([]);
-  const [loading, setLoading] = useState(true);
-
   const [modal, setModal] = useState({
     isOpen: false,
     testId: null,
@@ -33,22 +31,6 @@ const TeacherDashboard = ({
     closeModal();
   };
 
-  useEffect(() => {
-    const fetchResults = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('test_results')
-          .select('*')
-          .order('created_at', { ascending: false });
-        if (!error) setAnalytics(data || []);
-      } catch (err) {
-        console.error('Помилка завантаження даних:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchResults();
-  }, []);
 
   const teacherTestTitles = new Set(
     tests.map((test) => test.title).filter(Boolean)
@@ -114,9 +96,7 @@ const TeacherDashboard = ({
         <section className="dashboard-section">
           <h3 className="section-title">📊 Останні результати студентів</h3>
           <div className="data-card analytics-card">
-            {loading ? (
-              <div className="loading-placeholder">Синхронізація з базою даних...</div>
-            ) : filteredAnalytics.length > 0 ? (
+            {filteredAnalytics.length > 0 ? (
               <div className="table-responsive">
                 <table className="modern-table">
                   <thead>
@@ -181,7 +161,7 @@ const TeacherDashboard = ({
               {tests.map((test) => (
                 <div key={test.id} className="modern-test-card">
                   <div className="card-top">
-                    <span className="q-count-badge">{test.questions?.length || 0} питань</span>
+                    <span className="q-count-badge">{getQuestionCount(test)} питань</span>
                     <h4 className="card-test-title">{test.title || 'Без назви'}</h4>
                   </div>
                   <div className="card-bottom">

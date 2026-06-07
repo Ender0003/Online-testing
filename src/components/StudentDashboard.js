@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import './StudentDashboard.css';
 
 const normalizeText = (value) => (value || '').trim().toLowerCase();
@@ -25,6 +25,7 @@ const StudentDashboard = ({
   testsLoading = false,
   testsError = '',
   history = [],
+  getQuestionCount = (test) => test.questions?.length || test.questionCount || 0,
   onStartTest,
   onExit,
   themeMode = 'dark',
@@ -146,7 +147,7 @@ const StudentDashboard = ({
                           <div className="card-icon">📝</div>
                           <div className="card-body">
                             <h3>{test.title}</h3>
-                            <span className="q-badge">{test.questions?.length || 0} запитань</span>
+                            <span className="q-badge">{getQuestionCount(test)} запитань</span>
                           </div>
                           <button
                             className="start-test-btn"

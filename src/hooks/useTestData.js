@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
+﻿import { useState, useEffect } from 'react';
+import { apiClient } from '../apiClient';
 
 const normalizeText = (value) => (value || '').trim().toLowerCase();
 
@@ -9,42 +9,8 @@ const hasTestOwner = (test) => {
   return Boolean(authorEmail || author);
 };
 
-const isTeacherProfile = (profile) => {
-  const role = normalizeText(profile?.role);
-  return role === 'teacher' || role === 'викладач';
-};
-
-const getProfileName = (profile) => profile?.name || profile?.full_name || profile?.email || '';
-
-const mapDbTest = (test) => ({
-  id: test.id,
-  title: test.title || '',
-  questions: Array.isArray(test.questions) ? test.questions : [],
-  author: test.author_name || '',
-  authorEmail: test.author_email || '',
-  createdAt: test.created_at,
-  updatedAt: test.updated_at,
-});
-
-const mapTestPayload = ({ title, questions, authorName, authorEmail }) => ({
-  title,
-  questions,
-  author_name: authorName || '',
-  author_email: authorEmail || '',
-});
-
-const mapDbResult = (result) => ({
-  id: result.id,
-  testTitle: result.test_title,
-  score: result.score,
-  total: result.total,
-  userEmail: result.student_email,
-  userName: result.student_name,
-  date: result.created_at
-    ? new Date(result.created_at).toLocaleString('uk-UA')
-    : new Date().toLocaleString('uk-UA'),
-  percentage: result.percentage,
-});
+const getQuestionCount = (test) =>
+  Number.isFinite(test?.questionCount) ? test.questionCount : test?.questions?.length || 0;
 
 const getTestFingerprint = (test) =>
   [
@@ -68,87 +34,84 @@ const getSavedLocalTests = () => {
   }
 };
 
+const mapResultForAnalytics = (result) => ({
+  id: result.id,
+  test_title: result.testTitle,
+  student_name: result.userName,
+  student_email: result.userEmail,
+  score: result.score,
+  total: result.total,
+  percentage: result.percentage,
+  created_at: result.createdAt || new Date().toISOString(),
+});
+
 export function useTestData(currentUser) {
   const [publishedTests, setPublishedTests] = useState([]);
   const [registeredTeachers, setRegisteredTeachers] = useState([]);
   const [testsLoading, setTestsLoading] = useState(true);
   const [testsError, setTestsError] = useState('');
   const [testHistory, setTestHistory] = useState([]);
+  const [allResults, setAllResults] = useState([]);
 
   useEffect(() => {
     const fetchTests = async () => {
       setTestsLoading(true);
       setTestsError('');
 
-      const { data, error } = await supabase
-        .from('tests')
-        .select('*')
-        .order('created_at', { ascending: false });
+      try {
+        const isTeacher = currentUser?.role === 'teacher';
+        const endpoint = isTeacher && currentUser?.email
+          ? '/api/teacher/tests'
+          : '/api/tests';
+        const { tests } = await apiClient.get(endpoint);
+        let dbTests = (tests || []).filter(hasTestOwner);
 
-      if (error) {
+        const localTestsAlreadyMigrated = localStorage.getItem('published_tests_migrated_to_server') === 'true';
+        const localTests = localTestsAlreadyMigrated ? [] : getSavedLocalTests();
+        const dbFingerprints = new Set(dbTests.map(getTestFingerprint));
+        const testsToMigrate = localTests.filter((test) => !dbFingerprints.has(getTestFingerprint(test)));
+
+        if (testsToMigrate.length > 0 && isTeacher) {
+          const migratedTests = [];
+
+          for (const test of testsToMigrate) {
+            const { test: migratedTest } = await apiClient.post('/api/tests', {
+              title: test.title,
+              questions: test.questions,
+              authorName: test.author,
+              authorEmail: test.authorEmail,
+            });
+            migratedTests.push(migratedTest);
+          }
+
+          localStorage.setItem('published_tests_migrated_to_server', 'true');
+          dbTests = [...migratedTests, ...dbTests];
+        } else if (!localTestsAlreadyMigrated) {
+          localStorage.setItem('published_tests_migrated_to_server', 'true');
+        }
+
+        setPublishedTests(dbTests);
+      } catch (error) {
         console.error('Помилка завантаження тестів:', error.message);
         setPublishedTests([]);
-        setTestsError('Не вдалося завантажити тести з бази.');
+        setTestsError(error.message || 'Не вдалося завантажити тести з бази.');
+      } finally {
         setTestsLoading(false);
-        return;
       }
-
-      let dbTests = (data || []).map(mapDbTest).filter(hasTestOwner);
-
-      const localTestsAlreadyMigrated = localStorage.getItem('published_tests_migrated_to_supabase') === 'true';
-      const localTests = localTestsAlreadyMigrated ? [] : getSavedLocalTests();
-      const dbFingerprints = new Set(dbTests.map(getTestFingerprint));
-      const testsToMigrate = localTests.filter((test) => !dbFingerprints.has(getTestFingerprint(test)));
-
-      if (testsToMigrate.length > 0) {
-        const { data: migratedTests, error: migrateError } = await supabase
-          .from('tests')
-          .insert(
-            testsToMigrate.map((test) =>
-              mapTestPayload({
-                title: test.title,
-                questions: test.questions,
-                authorName: test.author,
-                authorEmail: test.authorEmail,
-              })
-            )
-          )
-          .select();
-
-        if (migrateError) {
-          console.error('Помилка міграції локальних тестів:', migrateError.message);
-        } else {
-          localStorage.setItem('published_tests_migrated_to_supabase', 'true');
-          dbTests = [...(migratedTests || []).map(mapDbTest), ...dbTests];
-        }
-      } else if (!localTestsAlreadyMigrated) {
-        localStorage.setItem('published_tests_migrated_to_supabase', 'true');
-      }
-
-      setPublishedTests(dbTests);
-      setTestsLoading(false);
     };
 
     fetchTests();
-  }, []);
+  }, [currentUser?.email, currentUser?.role]);
 
   useEffect(() => {
     const fetchRegisteredTeachers = async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*');
-
-      if (error) {
+      try {
+        const { teachers } = await apiClient.get('/api/teachers');
+        setRegisteredTeachers(teachers || []);
+      } catch (error) {
         console.error('Помилка завантаження викладачів:', error.message);
         setRegisteredTeachers([]);
-        return;
       }
-
-      const teachers = (data || [])
-        .filter(isTeacherProfile)
-        .sort((a, b) => getProfileName(a).localeCompare(getProfileName(b), 'uk'));
-
-      setRegisteredTeachers(teachers);
     };
 
     fetchRegisteredTeachers();
@@ -161,130 +124,120 @@ export function useTestData(currentUser) {
         return;
       }
 
-      const { data, error } = await supabase
-        .from('test_results')
-        .select('*')
-        .eq('student_email', currentUser.email)
-        .order('created_at', { ascending: false });
-
-      if (error) {
+      try {
+        const { results } = await apiClient.get('/api/results');
+        setTestHistory(results || []);
+      } catch (error) {
         console.error('Помилка завантаження історії:', error.message);
         setTestHistory([]);
-        return;
       }
-
-      setTestHistory((data || []).map(mapDbResult));
     };
 
     fetchHistory();
   }, [currentUser?.email]);
 
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      if (currentUser?.role !== 'teacher') {
+        setAllResults([]);
+        return;
+      }
+
+      try {
+        const { results } = await apiClient.get('/api/analytics/results');
+        setAllResults(results || []);
+      } catch (error) {
+        console.error('Помилка завантаження аналітики:', error.message);
+        setAllResults([]);
+      }
+    };
+
+    fetchAnalytics();
+  }, [currentUser?.role]);
+
+  const startTest = async (id) => {
+    const { test } = await apiClient.get(`/api/tests/${id}/run`);
+    return test;
+  };
+
+  const fetchTeacherTest = async (id) => {
+    const { test } = await apiClient.get(`/api/teacher/tests/${id}`);
+    return test;
+  };
+
+  const submitTest = async ({ testId, answers, userEmail, userName }) => {
+    const { result } = await apiClient.post(`/api/tests/${testId}/submit`, {
+      answers,
+      userEmail,
+      userName,
+    });
+
+    setTestHistory((prev) => [result, ...prev]);
+    setAllResults((prev) => [mapResultForAnalytics(result), ...prev]);
+    return result;
+  };
+
   const publishTest = async ({ title, questions, authorName, authorEmail }) => {
     setTestsError('');
 
-    const { data, error } = await supabase
-      .from('tests')
-      .insert([mapTestPayload({ title, questions, authorName, authorEmail })])
-      .select()
-      .single();
-
-    if (error) {
+    try {
+      const { test } = await apiClient.post('/api/tests', {
+        title,
+        questions,
+        authorName,
+        authorEmail,
+      });
+      setPublishedTests((prev) => [test, ...prev]);
+      return test;
+    } catch (error) {
       console.error('Помилка публікації тесту:', error.message);
-      setTestsError('Не вдалося опублікувати тест.');
+      setTestsError(error.message || 'Не вдалося опублікувати тест.');
       return null;
     }
-
-    const newTest = mapDbTest(data);
-    setPublishedTests((prev) => [newTest, ...prev]);
-    return newTest;
   };
 
   const updateTest = async (id, { title, questions }) => {
     setTestsError('');
 
-    const { data, error } = await supabase
-      .from('tests')
-      .update({
+    try {
+      const { test: updatedTest } = await apiClient.patch(`/api/tests/${id}`, {
         title,
         questions,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', id)
-      .select()
-      .single();
+      });
 
-    if (error) {
+      setPublishedTests((prev) =>
+        prev.map((test) => (test.id === id ? updatedTest : test))
+      );
+      return updatedTest;
+    } catch (error) {
       console.error('Помилка оновлення тесту:', error.message);
-      setTestsError('Не вдалося зберегти зміни тесту.');
+      setTestsError(error.message || 'Не вдалося зберегти зміни тесту.');
       return null;
     }
-
-    const updatedTest = mapDbTest(data);
-    setPublishedTests((prev) =>
-      prev.map((test) => (test.id === id ? updatedTest : test))
-    );
-    return updatedTest;
   };
 
   const deleteTest = async (id) => {
     setTestsError('');
 
-    const { error } = await supabase
-      .from('tests')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
+    try {
+      await apiClient.delete(`/api/tests/${id}`);
+      setPublishedTests((prev) => prev.filter((test) => test.id !== id));
+      return true;
+    } catch (error) {
       console.error('Помилка видалення тесту:', error.message);
-      setTestsError('Не вдалося видалити тест.');
+      setTestsError(error.message || 'Не вдалося видалити тест.');
       return false;
     }
-
-    setPublishedTests((prev) => prev.filter((test) => test.id !== id));
-    return true;
-  };
-
-  const saveResult = async ({ testTitle, score, total, userEmail, userName }) => {
-    const percentage = total > 0 ? Math.round((score / total) * 100) : 0;
-    const { data, error } = await supabase
-      .from('test_results')
-      .insert([{
-        test_title: testTitle,
-        student_name: userName,
-        student_email: userEmail,
-        score: score,
-        total: total,
-        percentage: percentage
-      }])
-      .select()
-      .single();
-
-    if (error) console.error('Помилка БД:', error.message);
-
-    const entry = data ? mapDbResult(data) : {
-      id: Date.now(),
-      testTitle,
-      score,
-      total,
-      userEmail,
-      userName,
-      date: new Date().toLocaleString('uk-UA'),
-      percentage
-    };
-    setTestHistory(prev => [entry, ...prev]);
   };
 
   const fetchAllResults = async () => {
-    const { data, error } = await supabase
-      .from('test_results')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
+    try {
+      const { results } = await apiClient.get('/api/analytics/results');
+      return results || [];
+    } catch (error) {
       console.error('Помилка завантаження аналітики:', error.message);
       return [];
     }
-    return data;
   };
 
   return {
@@ -292,12 +245,16 @@ export function useTestData(currentUser) {
     publishTest,
     updateTest,
     deleteTest,
-    saveResult,
+    startTest,
+    fetchTeacherTest,
+    submitTest,
     fetchAllResults,
+    allResults,
     registeredTeachers,
     testsLoading,
     testsError,
     testHistory,
-    getHistoryForUser: (email) => testHistory.filter(h => h.userEmail === email)
+    getQuestionCount,
+    getHistoryForUser: (email) => testHistory.filter(h => h.userEmail === email),
   };
 }
